@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WMO Header Decoder (Table A)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        h2 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+        p {
+            font-size: 14px;
+            color: #555;
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px 0 0 4px;
+            text-transform: uppercase;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background: #0056b3;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 0 4px 4px 0;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #004494;
+        }
+        .result {
+            display: none;
+            background: #eef5fb;
+            padding: 20px;
+            border: 1px solid #cce0f2;
+            border-radius: 5px;
+        }
+        .result h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #0056b3;
+            border-bottom: 1px solid #cce0f2;
+            padding-bottom: 5px;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        .label {
+            font-weight: bold;
+            color: #444;
+        }
+        .error {
+            color: #d9534f;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>WMO Header Decoder</h2>
+    <p>Enter a WMO Header (e.g., <strong>SAUS41</strong>, <strong>FOUS11</strong>, <strong>WUUS51</strong>) to decode its T1 Data Type Designator based on NWS Table A.</p>
+    
+    <div class="input-group">
+        <input type="text" id="wmoInput" placeholder="Enter WMO Header..." maxlength="10">
+        <button onclick="decodeHeader()">Decode</button>
+    </div>
+
+    <div id="errorMsg" class="error">Please enter a valid WMO header.</div>
+
+    <div id="resultBox" class="result">
+        <h3>Decoded T1 Designator: <span id="resT1"></span></h3>
+        <div class="data-row"><span class="label">Data Type:</span> <span id="resType"></span></div>
+        <div class="data-row"><span class="label">T2 Table:</span> <span id="resT2"></span></div>
+        <div class="data-row"><span class="label">A1 Table:</span> <span id="resA1"></span></div>
+        <div class="data-row"><span class="label">A2 Table:</span> <span id="resA2"></span></div>
+        <div class="data-row"><span class="label">Priority:</span> <span id="resPri"></span></div>
+        <div class="data-row"><span class="label">Max Length:</span> <span id="resMax"></span></div>
+    </div>
+</div>
+
+<script>
+    // Data Matrix extracted from https://www.weather.gov/tg/tablea
+    const tableA = {
+        "A": { type: "Analyses", t2: "B1", a1: "C1", a2: "C1", priority: "3", maxLen: "15,000" },
+        "B": { type: "Service message", t2: "***", a1: "***", a2: "***", priority: "1/2/4*", maxLen: "15,000" },
+        "C": { type: "Climatic data", t2: "B1", a1: "C1", a2: "C1", priority: "4", maxLen: "15,000" },
+        "D": { type: "Grid point information (GRID)", t2: "B2", a1: "C3", a2: "C4", priority: "3", maxLen: "15,000" },
+        "E": { type: "Satellite imagery", t2: "B5", a1: "C1", a2: "C1", priority: "3", maxLen: "(1)" },
+        "F": { type: "Forecast", t2: "B1", a1: "C1", a2: "C1", priority: "3", maxLen: "15,000" },
+        "G": { type: "Grid point information (GRID)", t2: "B2", a1: "C3", a2: "C4", priority: "3", maxLen: "15,000" },
+        "H": { type: "Grid point information (GRIB)", t2: "B2", a1: "C3", a2: "C4", priority: "3", maxLen: "15,000" },
+        "I": { type: "Binary observation - BUFR", t2: "B3", a1: "C6", a2: "C3", priority: "3", maxLen: "15,000" },
+        "J": { type: "Forecast Information - BUFR", t2: "B3", a1: "C6", a2: "C4", priority: "3", maxLen: "15,000" },
+        "K": { type: "CREX", t2: "C7", a1: "C7", a2: "C3", priority: "2", maxLen: "15,000" },
+        "L": { type: "Unassigned (--)", t2: "N/A", a1: "N/A", a2: "N/A", priority: "N/A", maxLen: "N/A" },
+        "M": { type: "Unassigned (--)", t2: "N/A", a1: "N/A", a2: "N/A", priority: "N/A", maxLen: "N/A" },
+        "N": { type: "Notices", t2: "B1", a1: "C1", a2: "C1", priority: "4", maxLen: "15,000" },
+        "O": { type: "Oceanographic (GRIB)", t2: "B4", a1: "C3", a2: "C4", priority: "3", maxLen: "15,000" },
+        "P": { type: "Pictorial information(binary)", t2: "B6", a1: "C3", a2: "C4", priority: "3", maxLen: "15,000" },
+        "Q": { type: "Pictorial information regional", t2: "B6", a1: "C3", a2: "C5", priority: "3", maxLen: "(1)" },
+        "R": { type: "Unassigned (--)", t2: "N/A", a1: "N/A", a2: "N/A", priority: "N/A", maxLen: "N/A" },
+        "S": { type: "Surface data", t2: "B1", a1: "C1/C2", a2: "C1/C2", priority: "2/4*", maxLen: "15,000" },
+        "T": { type: "Satellite data", t2: "B1", a1: "C3", a2: "C4", priority: "2", maxLen: "15,000" },
+        "U": { type: "Upper-air data", t2: "B1", a1: "C1/C2", a2: "C1/C2", priority: "2", maxLen: "15,000" },
+        "V": { type: "National data", t2: "(3)", a1: "C1", a2: "C1", priority: "(2)", maxLen: "(1)" },
+        "W": { type: "Warnings", t2: "B1", a1: "C1", a2: "C1", priority: "1", maxLen: "15,000" },
+        "X": { type: "GRID regional use", t2: "B2", a1: "C3", a2: "(2)", priority: "3", maxLen: "15,000" },
+        "Y": { type: "GRIB regional use", t2: "B2", a1: "C3", a2: "(3)", priority: "3", maxLen: "15,000" },
+        "Z": { type: "GRIB National use", t2: "(3)", a1: "(3)", a2: "(3)", priority: "3", maxLen: "15,000" }
+    };
+
+    function decodeHeader() {
+        const inputStr = document.getElementById("wmoInput").value.trim().toUpperCase();
+        const errorMsg = document.getElementById("errorMsg");
+        const resultBox = document.getElementById("resultBox");
+
+        if (inputStr.length === 0 || !/^[A-Z]/.test(inputStr)) {
+            errorMsg.style.display = "block";
+            resultBox.style.display = "none";
+            return;
+        }
+
+        const t1Char = inputStr.charAt(0);
+        const data = tableA[t1Char];
+
+        if (!data) {
+            errorMsg.innerText = `Character '${t1Char}' is not a valid T1 designator.`;
+            errorMsg.style.display = "block";
+            resultBox.style.display = "none";
+            return;
+        }
+
+        // Hide error, show result
+        errorMsg.style.display = "none";
+        resultBox.style.display = "block";
+
+        // Populate values
+        document.getElementById("resT1").innerText = t1Char;
+        document.getElementById("resType").innerText = data.type;
+        document.getElementById("resT2").innerText = data.t2;
+        document.getElementById("resA1").innerText = data.a1;
+        document.getElementById("resA2").innerText = data.a2;
+        document.getElementById("resPri").innerText = data.priority;
+        document.getElementById("resMax").innerText = data.maxLen;
+    }
+
+    // Allow Enter key to trigger decode
+    document.getElementById("wmoInput").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            decodeHeader();
+        }
+    });
+</script>
+
+</body>
+</html>
