@@ -3,186 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WMO Header Decoder (Table A)</title>
+    <title>Advanced WMO Header Decoder</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
+            font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+            padding-top: 40px;
+            background-color: #f8f9fa;
         }
-        .container {
-            background: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            max-width: 500px;
-            width: 100%;
+        table {
+            border-collapse: collapse;
+            width: 750px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        h2 {
-            margin-top: 0;
-            color: #0056b3;
-        }
-        p {
-            font-size: 14px;
-            color: #555;
-        }
-        .input-group {
-            display: flex;
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            flex: 1;
-            padding: 10px;
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
             font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px 0 0 4px;
+        }
+        .header-pink {
+            background-color: #f4cccc;
+            font-weight: bold;
+        }
+        .header-green {
+            background-color: #57bb8a;
+            font-weight: bold;
+        }
+        .row-light-green {
+            background-color: #e2efda;
+        }
+        .row-white {
+            background-color: white;
+        }
+        .col-bold {
+            font-weight: bold;
+            width: 10%;
+        }
+        .col-val {
+            width: 15%;
+        }
+        .col-desc {
+            width: 50%;
+        }
+        .col-table {
+            width: 25%;
+            font-size: 13px;
+            color: #555;
+            font-style: italic;
+        }
+        input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            outline: none;
+            font-family: Arial, sans-serif;
             text-transform: uppercase;
         }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            background: #0056b3;
-            color: #fff;
-            cursor: pointer;
-            border-radius: 0 4px 4px 0;
-            transition: background 0.3s ease;
-        }
-        button:hover {
-            background: #004494;
-        }
-        .result {
-            display: none;
-            background: #eef5fb;
-            padding: 20px;
-            border: 1px solid #cce0f2;
-            border-radius: 5px;
-        }
-        .result h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #0056b3;
-            border-bottom: 1px solid #cce0f2;
-            padding-bottom: 5px;
-        }
-        .data-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 15px;
-        }
-        .label {
-            font-weight: bold;
-            color: #444;
-        }
-        .error {
-            color: #d9534f;
-            font-weight: bold;
-            display: none;
+        input::placeholder {
+            text-transform: none;
+            font-weight: normal;
+            color: #aaa;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>WMO Header Decoder</h2>
-    <p>Enter a WMO Header (e.g., <strong>SAUS41</strong>, <strong>FOUS11</strong>, <strong>WUUS51</strong>) to decode its T1 Data Type Designator based on NWS Table A.</p>
-    
-    <div class="input-group">
-        <input type="text" id="wmoInput" placeholder="Enter WMO Header..." maxlength="10">
-        <button onclick="decodeHeader()">Decode</button>
-    </div>
-
-    <div id="errorMsg" class="error">Please enter a valid WMO header.</div>
-
-    <div id="resultBox" class="result">
-        <h3>Decoded T1 Designator: <span id="resT1"></span></h3>
-        <div class="data-row"><span class="label">Data Type:</span> <span id="resType"></span></div>
-        <div class="data-row"><span class="label">T2 Table:</span> <span id="resT2"></span></div>
-        <div class="data-row"><span class="label">A1 Table:</span> <span id="resA1"></span></div>
-        <div class="data-row"><span class="label">A2 Table:</span> <span id="resA2"></span></div>
-        <div class="data-row"><span class="label">Priority:</span> <span id="resPri"></span></div>
-        <div class="data-row"><span class="label">Max Length:</span> <span id="resMax"></span></div>
-    </div>
-</div>
+    <table>
+        <tr>
+            <td colspan="4" class="header-pink">Enter WMO Header Below</td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <input type="text" id="wmo-input" placeholder="e.g., FTUS26 KWBC" autocomplete="off" spellcheck="false" maxlength="11">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" class="header-pink">\</td>
+        </tr>
+        <tr>
+            <td colspan="4" class="header-green">Decoded WMO Header</td>
+        </tr>
+        <tr class="row-white">
+            <td class="col-bold">T1</td>
+            <td id="val-t1" class="col-val"></td>
+            <td id="desc-t1" class="col-desc"></td>
+            <td id="tbl-t1" class="col-table"></td>
+        </tr>
+        <tr class="row-light-green">
+            <td class="col-bold">T2</td>
+            <td id="val-t2" class="col-val"></td>
+            <td id="desc-t2" class="col-desc"></td>
+            <td id="tbl-t2" class="col-table"></td>
+        </tr>
+        <tr class="row-white">
+            <td class="col-bold">A1A2</td>
+            <td id="val-a1a2" class="col-val"></td>
+            <td id="desc-a1a2" class="col-desc"></td>
+            <td id="tbl-a1a2" class="col-table"></td>
+        </tr>
+        <tr class="row-light-green">
+            <td class="col-bold">ii</td>
+            <td id="val-ii" class="col-val"></td>
+            <td id="desc-ii" class="col-desc"></td>
+            <td id="tbl-ii" class="col-table"></td>
+        </tr>
+        <tr class="row-white">
+            <td class="col-bold">CCCC</td>
+            <td id="val-cccc" class="col-val"></td>
+            <td id="desc-cccc" class="col-desc"></td>
+            <td id="tbl-cccc" class="col-table"></td>
+        </tr>
+    </table>
 
 <script>
-    // Data Matrix extracted from https://www.weather.gov/tg/tablea
+    // --- DATABASE (Cascading Logic based on Spreadsheet C17-C23) --- //
+
+    // Table A: Master Key. Determines Data Type and which tables to use for T2, A1, A2
     const tableA = {
-        "A": { type: "Analyses", t2: "B1", a1: "C1", a2: "C1", priority: "3", maxLen: "15,000" },
-        "B": { type: "Service message", t2: "***", a1: "***", a2: "***", priority: "1/2/4*", maxLen: "15,000" },
-        "C": { type: "Climatic data", t2: "B1", a1: "C1", a2: "C1", priority: "4", maxLen: "15,000" },
-        "D": { type: "Grid point information (GRID)", t2: "B2", a1: "C3", a2: "C4", priority: "3", maxLen: "15,000" },
-        "E": { type: "Satellite imagery", t2: "B5", a1: "C1", a2: "C1", priority: "3", maxLen: "(1)" },
-        "F": { type: "Forecast", t2: "B1", a1: "C1", a2: "C1", priority: "3", maxLen: "15,000" },
-        "G": { type: "Grid point information (GRID)", t2: "B2", a1: "C3", a2: "C4", priority: "3", maxLen: "15,000" },
-        "H": { type: "Grid point information (GRIB)", t2: "B2", a1: "C3", a2: "C4", priority: "3", maxLen: "15,000" },
-        "I": { type: "Binary observation - BUFR", t2: "B3", a1: "C6", a2: "C3", priority: "3", maxLen: "15,000" },
-        "J": { type: "Forecast Information - BUFR", t2: "B3", a1: "C6", a2: "C4", priority: "3", maxLen: "15,000" },
-        "K": { type: "CREX", t2: "C7", a1: "C7", a2: "C3", priority: "2", maxLen: "15,000" },
-        "L": { type: "Unassigned (--)", t2: "N/A", a1: "N/A", a2: "N/A", priority: "N/A", maxLen: "N/A" },
-        "M": { type: "Unassigned (--)", t2: "N/A", a1: "N/A", a2: "N/A", priority: "N/A", maxLen: "N/A" },
-        "N": { type: "Notices", t2: "B1", a1: "C1", a2: "C1", priority: "4", maxLen: "15,000" },
-        "O": { type: "Oceanographic (GRIB)", t2: "B4", a1: "C3", a2: "C4", priority: "3", maxLen: "15,000" },
-        "P": { type: "Pictorial information(binary)", t2: "B6", a1: "C3", a2: "C4", priority: "3", maxLen: "15,000" },
-        "Q": { type: "Pictorial information regional", t2: "B6", a1: "C3", a2: "C5", priority: "3", maxLen: "(1)" },
-        "R": { type: "Unassigned (--)", t2: "N/A", a1: "N/A", a2: "N/A", priority: "N/A", maxLen: "N/A" },
-        "S": { type: "Surface data", t2: "B1", a1: "C1/C2", a2: "C1/C2", priority: "2/4*", maxLen: "15,000" },
-        "T": { type: "Satellite data", t2: "B1", a1: "C3", a2: "C4", priority: "2", maxLen: "15,000" },
-        "U": { type: "Upper-air data", t2: "B1", a1: "C1/C2", a2: "C1/C2", priority: "2", maxLen: "15,000" },
-        "V": { type: "National data", t2: "(3)", a1: "C1", a2: "C1", priority: "(2)", maxLen: "(1)" },
-        "W": { type: "Warnings", t2: "B1", a1: "C1", a2: "C1", priority: "1", maxLen: "15,000" },
-        "X": { type: "GRID regional use", t2: "B2", a1: "C3", a2: "(2)", priority: "3", maxLen: "15,000" },
-        "Y": { type: "GRIB regional use", t2: "B2", a1: "C3", a2: "(3)", priority: "3", maxLen: "15,000" },
-        "Z": { type: "GRIB National use", t2: "(3)", a1: "(3)", a2: "(3)", priority: "3", maxLen: "15,000" }
+        "F": { desc: "Forecast", t2Table: "B1", a1a2Table: "C1" },
+        "S": { desc: "Surface data", t2Table: "B1", a1a2Table: "C1/C2" },
+        "W": { desc: "Warnings", t2Table: "B1", a1a2Table: "C1" },
+        "H": { desc: "Grid point information (GRIB)", t2Table: "B2", a1a2Table: "C3" },
+        "T": { desc: "Satellite data", t2Table: "B1", a1a2Table: "C3" }
+        // Add remaining Table A entries here as needed
     };
 
-    function decodeHeader() {
-        const inputStr = document.getElementById("wmoInput").value.trim().toUpperCase();
-        const errorMsg = document.getElementById("errorMsg");
-        const resultBox = document.getElementById("resultBox");
+    // Table B1: Data types for Forecasts, Surface Data, Warnings (when T1 points here)
+    const tableB1 = {
+        "T": "Aerodrome (VT > 12 hours)",
+        "A": "Aviation routine reports",
+        "P": "Public forecasts",
+        "R": "Radar reports"
+        // Add remaining Table B1 entries here as needed
+    };
 
-        if (inputStr.length === 0 || !/^[A-Z]/.test(inputStr)) {
-            errorMsg.style.display = "block";
-            resultBox.style.display = "none";
-            return;
-        }
+    // Table C1 / Geographical Designators for A1A2
+    const tableC1 = {
+        "US": "United States of America",
+        "CA": "Canada",
+        "MX": "Mexico",
+        "AK": "Alaska"
+        // Add remaining Table C1 entries here as needed
+    };
 
-        const t1Char = inputStr.charAt(0);
-        const data = tableA[t1Char];
+    // Location Identifiers (CCCC)
+    const locationIDs = {
+        "KWBC": "GISC Washington",
+        "KNHC": "National Hurricane Center",
+        "KWBZ": "Storm Prediction Center"
+        // Add remaining CCCC entries here as needed
+    };
 
-        if (!data) {
-            errorMsg.innerText = `Character '${t1Char}' is not a valid T1 designator.`;
-            errorMsg.style.display = "block";
-            resultBox.style.display = "none";
-            return;
-        }
-
-        // Hide error, show result
-        errorMsg.style.display = "none";
-        resultBox.style.display = "block";
-
-        // Populate values
-        document.getElementById("resT1").innerText = t1Char;
-        document.getElementById("resType").innerText = data.type;
-        document.getElementById("resT2").innerText = data.t2;
-        document.getElementById("resA1").innerText = data.a1;
-        document.getElementById("resA2").innerText = data.a2;
-        document.getElementById("resPri").innerText = data.priority;
-        document.getElementById("resMax").innerText = data.maxLen;
+    // Standard ii Group logic (Simplified for demonstration)
+    function decodeII(iiCode) {
+        if (!iiCode) return "";
+        let num = parseInt(iiCode, 10);
+        if (num >= 20 && num <= 39) return "Regional and interregional distribution";
+        if (num >= 1 && num <= 19) return "Global distribution";
+        if (num >= 40 && num <= 89) return "National distribution";
+        return "Unspecified / Local";
     }
 
-    // Allow Enter key to trigger decode
-    document.getElementById("wmoInput").addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            decodeHeader();
+    // --- EVENT LISTENER & DECODING LOGIC --- //
+    const inputField = document.getElementById('wmo-input');
+
+    inputField.addEventListener('input', function(e) {
+        const val = e.target.value.toUpperCase();
+        
+        // Split input into TTAAii and CCCC
+        const parts = val.trim().split(/\s+/);
+        const ttaaii = parts[0] || "";
+        const cccc = parts[1] || "";
+
+        // Extract characters
+        const t1 = ttaaii.charAt(0) || "";
+        const t2 = ttaaii.charAt(1) || "";
+        const a1a2 = ttaaii.substring(2, 4) || "";
+        const ii = ttaaii.substring(4, 6) || "";
+
+        // Set UI Values
+        document.getElementById('val-t1').textContent = t1;
+        document.getElementById('val-t2').textContent = t2;
+        document.getElementById('val-a1a2').textContent = a1a2;
+        document.getElementById('val-ii').textContent = ii;
+        document.getElementById('val-cccc').textContent = cccc;
+
+        // Reset Descriptions & Table Sources
+        let t1Desc = "", t2Desc = "", a1a2Desc = "", iiDesc = "", ccccDesc = "";
+        let t1Tbl = "", t2Tbl = "", a1a2Tbl = "", iiTbl = "", ccccTbl = "";
+
+        // --- C17-C23 CASCADING LOOKUP LOGIC --- //
+        
+        // 1. Decode T1 (Row 17)
+        if (t1) {
+            const t1Data = tableA[t1];
+            if (t1Data) {
+                t1Desc = t1Data.desc;
+                t1Tbl = "Ref: Table A";
+
+                // 2. Decode T2 based on T1's routing (Row 18)
+                if (t2) {
+                    if (t1Data.t2Table === "B1") {
+                        t2Desc = tableB1[t2] || "Not found in B1";
+                        t2Tbl = `Ref: Table B1 (Routed by '${t1}')`;
+                    } else {
+                        t2Desc = `Requires Table ${t1Data.t2Table}`;
+                        t2Tbl = `Ref: Table ${t1Data.t2Table}`;
+                    }
+                }
+
+                // 3. Decode A1A2 based on T1's routing (Row 21)
+                if (a1a2.length === 2) {
+                    if (t1Data.a1a2Table.includes("C1")) {
+                        a1a2Desc = tableC1[a1a2] || "Not found in C1";
+                        a1a2Tbl = `Ref: Table C1 (Routed by '${t1}')`;
+                    } else {
+                        a1a2Desc = `Requires Table ${t1Data.a1a2Table}`;
+                        a1a2Tbl = `Ref: Table ${t1Data.a1a2Table}`;
+                    }
+                }
+            } else {
+                t1Desc = "Invalid T1 Designator";
+            }
         }
+
+        // 4. Decode ii (Row 22)
+        if (ii.length === 2) {
+            iiDesc = decodeII(ii);
+            iiTbl = "Ref: ii Priorities";
+        }
+
+        // 5. Decode CCCC (Row 23)
+        if (cccc.length === 4) {
+            ccccDesc = locationIDs[cccc] || "Station not in DB";
+            ccccTbl = "Ref: NWS Location IDs";
+        } else if (cccc.length > 0) {
+            ccccDesc = "Incomplete CCCC";
+        }
+
+        // Apply descriptions to UI
+        document.getElementById('desc-t1').textContent = t1Desc;
+        document.getElementById('desc-t2').textContent = t2Desc;
+        document.getElementById('desc-a1a2').textContent = a1a2Desc;
+        document.getElementById('desc-ii').textContent = iiDesc;
+        document.getElementById('desc-cccc').textContent = ccccDesc;
+
+        // Apply table sources to UI
+        document.getElementById('tbl-t1').textContent = t1Tbl;
+        document.getElementById('tbl-t2').textContent = t2Tbl;
+        document.getElementById('tbl-a1a2').textContent = a1a2Tbl;
+        document.getElementById('tbl-ii').textContent = iiTbl;
+        document.getElementById('tbl-cccc').textContent = ccccTbl;
     });
 </script>
 
